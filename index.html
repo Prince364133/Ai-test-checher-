@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Answer Sheet Grader</title>
+    <style>
+        .question {
+            color: black;
+            font-weight: bold;
+        }
+        .student-answer {
+            color: red; /* Highlight wrong answers in red */
+            font-weight: bold;
+        }
+        .ai-answer {
+            color: green; /* Highlight correct answers in green */
+            font-weight: bold;
+        }
+        .marks {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+            line-height: 30px;
+            border: 2px solid black;
+            border-radius: 50%;
+            font-weight: bold;
+        }
+    </style>
+    <!-- Include MathJax library for LaTeX rendering -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+    <label> <h1 class="highlight-
+
+blue">AI TEST CHECKER 🔥</h1></label>
+    <h2>Step 1: Paste Your Answer Sheet</h2>
+    
+    <!-- Class Selection Dropdown -->
+    <label for="classSelection">Select Class:</label>
+    <select id="classSelection">
+        <option value="Class 1">Class 1</option>
+        <option value="Class 2">Class 2</option>
+        <option value="Class 3">Class 3</option>
+        <option value="Class 4">Class 4</option>
+        <option value="Class 5">Class 5</option>
+         <option value="Class 6">Class 6</option>
+         <option value="Class 7">Class 7</option>
+         <option value="Class 8">Class 8</option>
+         <option value="Class 9">Class 9</option>
+         <option value="Class 10">Class 10</option>
+         <option value="Class 11">Class 11</option>
+         <option value="Class 12">Class 12</option>
+         <option value="Competetion">Competetion</option>
+        <!-- Add more classes as needed -->
+    </select>
+    <br><br>
+
+    <!-- Subject Input Field -->
+    <label for="subjectInput">Subject Name:</label>
+    <input type="text" id="subjectInput" placeholder="Enter subject name">
+    <br><br>
+
+    <!-- Publisher Input Field -->
+    <label for="publisherInput">Publisher Name:</label>
+    <input type="text" id="publisherInput" placeholder="Enter publisher name">
+    <br><br>
+
+    <textarea id="textInput" rows="10" cols="50" placeholder="Paste your text here..."></textarea>
+    <br>
+    <button onclick="processAndRedirect()">Go to ChatGPT</button>
+
+    <h2>Step 2: Paste Processed Text from ChatGPT</h2>
+    <textarea id="processedText" rows="10" cols="50" placeholder="Paste processed text from ChatGPT here..."></textarea>
+    <br>
+    <button onclick="highlightText()">Highlight and Grade</button>
+
+    <h2>Highlighted and Graded Result:</h2>
+    <div id="highlightedOutput"></div>
+    
+    <!-- Button to download the final processed text as a PDF -->
+    <button onclick="downloadPDF()">Download PDF</button>
+
+    <!-- Include jsPDF and html2canvas libraries for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+    <script>
+        // Function to prepare the prompt for ChatGPT
+        function processAndRedirect() {
+            let userText = document.getElementById('textInput').value;
+            let selectedClass = document.getElementById('classSelection').value;
+            let subjectName = document.getElementById('subjectInput').value;
+            let publisherName = document.getElementById('publisherInput').value;
+
+            // Create the detailed prompt
+            let processedText = `
+                Please analyze the following student answers for ${subjectName} (${publisherName}), class: ${selectedClass}.
+                1. Identify questions and student answers.
+                2. Search for the correct answers to the questions on the internet.
+                3. Compare the student's answer with the correct answer and if students answer is incorrect or little mistake then  give the correct answer and its explanation.
+                4. Grade the answer based on conceptual match: 80% match = full marks, below 80% = reduce marks and don't remove anything from question including options also.
+                5. Return the formatted result:
+                   - Questions should be prefixed with ##.
+                   - Student answers prefixed with @@.
+                   - Correct AI answers prefixed with **.
+                   - Display marks in a circle (like 4/5 without additional brackets). and calculate total marks and give some tips to student for improvement
+                Here is the text:\n\n${userText}`;
+
+            // Copy the processed prompt to clipboard
+            navigator.clipboard.writeText(processedText).then(() => {
+                // Open ChatGPT in a new window/tab
+                window.open('https://chat.openai.com/', '_blank');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
+
+        // Function to highlight and grade the processed text from ChatGPT
+        function highlightText() {
+            let processedText = document.getElementById('processedText').value;
+
+            // Highlight and format based on ChatGPT response
+            let highlighted = processedText
+                .replace(/##(.*?)\n/g, '<span class="question">$1</span><br>')  // Questions in black
+                .replace(/@@(.*?)\n/g, '<span class="student-answer">$1</span><br>')  // Student answers in red
+                .replace(/\*\*(.*?)\n/g, '<span class="ai-answer">$1</span><br>')  // AI answers in green
+                .replace(/(\d)\/(\d)/g, '<span class="marks">$1/$2</span><br>');  // Marks in circle
+
+            // Display the formatted and highlighted output
+            document.getElementById('highlightedOutput').innerHTML = highlighted;
+
+            // Render LaTeX expressions in the highlighted output
+            MathJax.typeset();
+        }
+
+        // Function to download the highlighted and graded result as a PDF
+        function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'pt', 'a4');
+            
+            let highlightedOutput = document.getElementById('highlightedOutput');
+            
+            html2canvas(highlightedOutput, {
+                scale: 2,
+                useCORS: true, // Use this if you have cross-origin content
+                allowTaint: true,
+            }).then(canvas => {
+                let imgData = canvas.toDataURL('image/png');
+                let imgWidth = 595.28; // A4 width
+                let imgHeight = canvas.height * imgWidth / canvas.width;
+
+                // Check for multiple pages
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= 841.89; // A4 page height in pt
+
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    doc.addPage();
+                    doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= 841.89;
+                }
+
+                // Draw the big circle for total marks on the last page
+                doc.setFontSize(48);
+                doc.setTextColor(0, 0, 0); // Black color for the circle and text
+                let totalMarks = "";  // Replace with dynamic calculation
+                doc.circle(297.64, 800, 50); // Draw a circle in the center of the last page
+                doc.text(totalMarks, 190, 810); // Place the total marks inside the circle
+
+                // Save the PDF
+                doc.save('By brdl Ai graded-result.pdf');
+            });
+        }
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Answer Sheet Grader</title>
+    <style>
+        body {
+            font-family: , sans-serif;
+            background-color: #f0f8ff;
+            padding: 20px;
+        }
+
+        .instructions-container {
+            background-color: #f9f9f9;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            line-height: 1.6;
+        }
+
+        .instructions-container h2 {
+            color: #333;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        .instructions-container h3 {
+            color: #555;
+            margin-top: 15px;
+        }
+
+        .instructions-container h4 {
+            color: #444;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .instructions-container p {
+            font-size: 16px;
+            color: #666;
+        }
+
+        .instructions-container ol {
+            margin-left: 20px;
+            list-style-type: decimal;
+        }
+
+        .instructions-container ul {
+            margin-left: 20px;
+            list-style-type: disc;
+        }
+
+        .watermark {
+            color: #999;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .download-buttons {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .download-btn {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            margin: 10px;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            font-size: 16px;
+        }
+
+        .download-btn:hover {
+            background-color: #45a049;
+        }
+
+        .download-btn:active {
+            background-color: #388e3c;
+        }
+
+        @media only screen and (max-width: 600px) {
+            .instructions-container h2 {
+                font-size: 20px;
+            }
+
+            .instructions-container p, .instructions-container ol, .instructions-container ul {
+                font-size: 14px;
+            }
+
+            .download-btn {
+                padding: 8px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="instructions-container">
+        <h2>📄 AI Answer Sheet Grader 📝</h2>
+        <p>This website is an <strong>"AI Answer Sheet Grader"</strong> designed to help teachers and students automatically grade answer sheets. It allows users to paste student responses, select a class, subject, and publisher, and receive AI-graded feedback. The tool highlights student mistakes, correct answers, and assigns marks, all while comparing the answers against correct solutions retrieved from the internet.</p>
+
+        <h3>How to Use:</h3>
+        <ol>
+            <li><strong>📋 Paste the Answer Sheet:</strong> Enter or paste the student's responses in the provided text area.</li>
+            <li><strong>📚 Class, Subject, and Publisher:</strong> Select the class and enter the subject and publisher details.</li>
+            <li><strong>💡 Process with ChatGPT:</strong> Generate a detailed analysis prompt, copy it, and open ChatGPT to get the AI's response.</li>
+            <li><strong>🔍 Highlight and Grade:</strong> Paste the processed ChatGPT result back into the site to see highlighted questions, student answers, and correct responses with marks.</li>
+            <li><strong>📥 Download the Results:</strong> Generate and download the highlighted result as a PDF.</li>
+        </ol>
+
+        <h3>✨ UI Improvement Suggestions:</h3>
+        <ul>
+            <li><strong>📱 Responsive Design:</strong> Ensure the website adjusts perfectly on mobile and tablets. Use media queries to resize text, buttons, and input fields dynamically.</li>
+            <li><strong>🎨 Visual Enhancements:</strong> Add subtle animations or hover effects for buttons and text highlights. For example, smooth transitions when switching between steps.</li>
+            <li><strong>🌈 Improved Color Schemes:</strong> Implement a customizable color palette for users to choose how the highlights and background should appear.</li>
+            <li><strong>📝 User-friendly Forms:</strong> Include placeholder text for each input field and enhance the dropdown options to make them more interactive.</li>
+            <li><strong>📊 Progress Indicators:</strong> Display a step-by-step progress bar to guide users through the grading process.</li>
+            <li><strong>📤 Simplified PDF Download:</strong> Provide a clearer button to download results, possibly with tooltips explaining the function.</li>
+        </ul>
+
+        <h4>🌟 Powered by BRDL</h4>
+        <p class="watermark">This website is powered by BRDL.</p>
+
+        <div class="download-buttons">
+            <h4>📲 Download our other apps:</h4>
+            <a href="https://drive.google.com/file/d/1BTfBT5v9TeySgUFf5W5O8Se1suAuUwGP/view?usp=drive_link" class="download-btn">📥 Download App 1</a>
+            <a href="https://drive.google.com/file/d/14S18Jb7OjLlyRzuCZAMUJ6eH7MSzjfzm/view?usp=drive_link" class="download-btn">📥 Download App 2</a>
+        </div>
+    </div>
+
+</body>
+</html>
